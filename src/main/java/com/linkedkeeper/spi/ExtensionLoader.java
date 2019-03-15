@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ExtensionLoader<T> implements ApplicationContextAware {
+public class ExtensionLoader implements ApplicationContextAware {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionLoader.class);
 
@@ -32,7 +32,7 @@ public class ExtensionLoader<T> implements ApplicationContextAware {
     private static final ConcurrentMap<Class<?>, Map<String, Object>> EXTENSION_LOADERS = new ConcurrentHashMap<>();
     private static final String SERVICES_DIRECTORY = "META-INF/spi/";
 
-    public <T> Map<String, Object> getExtensionLoader(Class<T> type) {
+    public Map<String, Object> getExtensionLoader(Class<?> type) {
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
         }
@@ -41,8 +41,13 @@ public class ExtensionLoader<T> implements ApplicationContextAware {
         }
         Map<String, Object> loader = EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            EXTENSION_LOADERS.putIfAbsent(type, loadExtensionClass(type.getName()));
-            loader = EXTENSION_LOADERS.get(type);
+            synchronized (this) {
+                loader = EXTENSION_LOADERS.get(type);
+                if (loader == null) {
+                    EXTENSION_LOADERS.putIfAbsent(type, loadExtensionClass(type.getName()));
+                    loader = EXTENSION_LOADERS.get(type);
+                }
+            }
         }
         return loader;
     }
@@ -70,7 +75,8 @@ public class ExtensionLoader<T> implements ApplicationContextAware {
                 }
             }
         } catch (Throwable t) {
-            System.out.println(t);
+            logger.error("Exception occurred when loading extension class (interface: " +
+                    type + ", description file: " + fileName + ").", t);
         }
     }
 
@@ -96,13 +102,13 @@ public class ExtensionLoader<T> implements ApplicationContextAware {
                                 loadClass(extensionClasses, resourceURL, Class.forName(line, true, classLoader), name);
                             }
                         } catch (Throwable t) {
-                            System.out.println(t);
+                            IllegalStateException e = new IllegalStateException("Failed to load extension class (class line: " + line + ") in " + resourceURL + ", cause: " + t.getMessage(), t);
                         }
                     }
                 }
             }
         } catch (Throwable t) {
-            System.out.println(t);
+            logger.error("Exception occurred when loading extension class (class file: " + resourceURL + ") in " + resourceURL, t);
         }
     }
 
@@ -140,7 +146,6 @@ public class ExtensionLoader<T> implements ApplicationContextAware {
         ConfigurableApplicationContext configurableApplicationContext = (ConfigurableApplicationContext) context;
         return (DefaultListableBeanFactory) configurableApplicationContext.getBeanFactory();
     }
-
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
