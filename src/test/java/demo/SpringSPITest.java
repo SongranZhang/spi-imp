@@ -18,7 +18,9 @@ public class SpringSPITest {
 
     @Test
     public void sayHello() throws Exception {
-        OrderService orderService = (OrderService) loader.getExtensionLoader(OrderService.class).get("japan");
-        orderService.getOrder("hello.");
+        OrderService japan = (OrderService) loader.getExtensionLoader(OrderService.class).get("japan");
+        japan.getOrder("hello.");
+        OrderService china = (OrderService) loader.getExtensionLoader(OrderService.class).get("china");
+        china.getOrder("worder.");
     }
 }
