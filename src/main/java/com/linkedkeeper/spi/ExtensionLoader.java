@@ -17,16 +17,39 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-public class ExtensionLoader implements ApplicationContextAware {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ExtensionLoader<T> implements ApplicationContextAware {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExtensionLoader.class);
 
     private ApplicationContext context;
 
+    private static final ConcurrentMap<Class<?>, Map<String, Object>> EXTENSION_LOADERS = new ConcurrentHashMap<>();
     private static final String SERVICES_DIRECTORY = "META-INF/spi/";
 
-    public Map<String, Object> loadExtensionClasses() {
+    public <T> Map<String, Object> getExtensionLoader(Class<T> type) {
+        if (type == null) {
+            throw new IllegalArgumentException("Extension type == null");
+        }
+        if (!type.isInterface()) {
+            throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
+        }
+        Map<String, Object> loader = EXTENSION_LOADERS.get(type);
+        if (loader == null) {
+            EXTENSION_LOADERS.putIfAbsent(type, loadExtensionClass(type.getName()));
+            loader = EXTENSION_LOADERS.get(type);
+        }
+        return loader;
+    }
+
+    private Map<String, Object> loadExtensionClass(String type) {
         Map<String, Object> extensionClasses = new HashMap<>();
-        loadDirectory(extensionClasses, SERVICES_DIRECTORY, "demo.spring.OrderService");
+        loadDirectory(extensionClasses, SERVICES_DIRECTORY, type);
         return extensionClasses;
     }
 
