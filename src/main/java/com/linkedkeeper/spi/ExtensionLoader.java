@@ -136,7 +136,7 @@ public class ExtensionLoader implements ApplicationContextAware {
     private Object parseClassToSpringBean(String name, Class<?> obj) {
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(obj);
         GenericBeanDefinition definition = (GenericBeanDefinition) builder.getRawBeanDefinition();
-        definition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
+        definition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_NAME);
         getRegistry().registerBeanDefinition(name, definition);
 
         return context.getBean(name);
