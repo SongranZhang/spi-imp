@@ -1,26 +1,24 @@
 package demo;
 
-import com.linkedkeeper.spi.ExtensionLoader;
+
 import demo.spring.OrderService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"classpath:spring.xml"})
 public class SpringSPITest {
 
-    @Autowired
-    private ExtensionLoader loader;
-
     @Test
     public void sayHello() throws Exception {
-        OrderService japan = (OrderService) loader.getExtensionLoader(OrderService.class).get("japan");
-        japan.getOrder("hello.");
-        OrderService china = (OrderService) loader.getExtensionLoader(OrderService.class).get("china");
-        china.getOrder("worder.");
+        List<OrderService> services = SpringFactoriesLoader.loadFactories(OrderService.class, null);
+        for (OrderService service : services) {
+            service.getOrder("worder.");
+        }
     }
 }
