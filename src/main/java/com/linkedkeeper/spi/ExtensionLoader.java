@@ -41,7 +41,7 @@ public class ExtensionLoader implements ApplicationContextAware {
         }
         Map<String, Object> loader = EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            synchronized (this) {
+            synchronized (ExtensionLoader.class) {
                 loader = EXTENSION_LOADERS.get(type);
                 if (loader == null) {
                     EXTENSION_LOADERS.putIfAbsent(type, loadExtensionClass(type.getName()));
